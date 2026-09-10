@@ -1,10 +1,48 @@
 # 4. Tuning guide
 
-Work through this in order: connection concurrency first, then segment
-sizing, then the read-side cache and reader limits. Change one thing at a
-time and re-run the relevant benchmark from `02-`/`03-` before stacking a
-second change - these properties interact, and it's easy to mask one
-bottleneck by fixing another.
+## The loop
+
+This is the actual procedure - the property sections below are what to slot
+into step 3, not a substitute for running it.
+
+1. **Baseline.** Run `02-benchmark-write-path.md` and `03-benchmark-read-path.md`
+   (including the read-path concurrency sweep) once, unmodified, and record
+   the numbers - achieved MB/s for write-path, and the throughput-vs-concurrency
+   curve for read-path. This is iteration 0. Do not skip recording it: without
+   a written baseline, "did that help?" three properties later is a guess.
+2. **Pick one lever.** Use the ordering below (connection concurrency, then
+   segment sizing, then read-side cache/readers) and the symptom-to-property
+   mapping in the decision tree at the bottom. Change exactly one property.
+3. **Re-run the same benchmark.** Same workload file, same driver file, same
+   duration you used for the baseline - only the one property changed.
+   Restart brokers first if the property needs it (check each property's
+   "Requires restart" note).
+4. **Compare against the previous iteration**, not just the original
+   baseline - gains can compound or cancel across changes.
+   - Meaningfully better -> keep the change, this number is the new
+     baseline, go back to step 2 for the next lever.
+   - No change, or worse -> revert the property, go back to step 2 and try
+     the next lever instead.
+5. **Stop when either is true:**
+   - The last one or two changes bought you less improvement than you'd
+     act on (diminishing returns) - the current configuration is your
+     production candidate.
+   - Achieved throughput has converged with the appliance/network ceiling
+     from `02-`'s "Reading the result" section, or the read-path
+     concurrency sweep has flattened - you've hit a hardware limit, and no
+     further Redpanda property is going to move it.
+
+A simple log (one row per iteration) is enough to keep this honest:
+
+| Iteration | Property changed | Old -> new value | Write-path MB/s | Read-path MB/s @ concurrency | Kept? |
+|---|---|---|---|---|---|
+| 0 (baseline) | - | - | | | - |
+| 1 | `cloud_storage_max_connections` | 20 -> 40 | | | |
+
+Work through the levers in this order: connection concurrency first, then
+segment sizing, then the read-side cache and reader limits - these
+properties interact, and it's easy to mask one bottleneck by fixing
+another out of order.
 
 All properties below are cluster-wide config, set with
 `rpk cluster config set <property> <value>`. Check the "restart" column

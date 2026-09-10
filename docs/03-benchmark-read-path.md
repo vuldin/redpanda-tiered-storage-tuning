@@ -69,5 +69,7 @@ throughput headroom.
   now the wrong direction: over-provisioned concurrency past what
   connections/memory can back) or appliance-side (front-end network/CPU).
 
-With write-path and read-path numbers in hand, go to `04-tuning-guide.md`
-to turn them into concrete property changes.
+**Record the write-path number and this concurrency curve as iteration 0**
+before changing any `cloud_storage_*` property - see "The loop" at the top
+of `04-tuning-guide.md`. With both in hand, go there now to turn them into
+concrete property changes.

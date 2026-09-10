@@ -63,5 +63,9 @@ you've found the real limit of your environment, not something a Redpanda
 property is going to move - that's a capacity/hardware conversation, not a
 tuning one.
 
+**Record this number before you touch any `cloud_storage_*` property** -
+it's iteration 0 in the tuning loop at the top of `04-tuning-guide.md`, and
+every property change from here on gets judged against it.
+
 Once you have a write-path number, move on to
 `03-benchmark-read-path.md` to test the other side.
