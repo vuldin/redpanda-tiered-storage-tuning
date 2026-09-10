@@ -1,6 +1,6 @@
 # 2. Benchmark the write path
 
-Goal: find the sustained throughput at which Redpanda can upload segments
+The goal of the steps outlined here is to find the sustained throughput at which Redpanda can upload segments
 to your appliance, isolated from the read side.
 
 ## How the test isolates the upload path
@@ -21,14 +21,9 @@ bin/benchmark \
   workloads/write-path-stress.yaml
 ```
 
-Give it at least the workload's configured 35 minutes total
-(`warmupDurationMinutes` + `testDurationMinutes` - OMB always runs a warmup
-phase before the timed window, and it isn't obvious from the workload file
-alone since most example workloads leave it at OMB's own default of 30).
-The first minute or two of the timed window will look artificially fast -
-Redpanda still has local segments to
-close and there's no upload backlog yet - so judge steady state from the
-back half of the run, not the opening burst.
+Give it at least the workload's configured 35 minutes total. This is because OMB always runs a warmup phase before the timed window (`warmupDurationMinutes` + `testDurationMinutes`).
+The first minute or two of the timed window will look artificially fast; this is because Redpanda still has local segments to
+close and there's no upload backlog yet. So determine the steady state based off the back half of the run.
 
 ## What to watch during the run
 
@@ -44,6 +39,7 @@ From each broker's `/public_metrics` and `/metrics` endpoints:
   it) the appliance's own front-end network/CPU utilization - you want to
   know which side actually saturated first.
 
+
 ## Reading the result
 
 Compute achieved upload throughput as total bytes produced over the
@@ -55,17 +51,16 @@ off OMB's output/results file). Compare that number against:
 
 If achieved throughput is well below both of those ceilings while
 `vectorized_ntp_archiver_pending` keeps climbing, the bottleneck is on
-Redpanda's side of the wire - go to `04-tuning-guide.md` and look at the
+Redpanda's side. In that case go to `04-tuning-guide.md` and look at the
 upload-concurrency properties first.
 
 If achieved throughput tracks the network or appliance ceiling closely,
-you've found the real limit of your environment, not something a Redpanda
-property is going to move - that's a capacity/hardware conversation, not a
-tuning one.
+you've found the real limit of your environment, which is not something a Redpanda
+property is going to move.
 
-**Record this number before you touch any `cloud_storage_*` property** -
+Either way, make sure to record this number before you touch any `cloud_storage_*` property since
 it's iteration 0 in the tuning loop at the top of `04-tuning-guide.md`, and
-every property change from here on gets judged against it.
+every property change from here on will get compared to it.
 
 Once you have a write-path number, move on to
 `03-benchmark-read-path.md` to test the other side.

@@ -20,11 +20,10 @@ forced to hydrate from object storage rather than serve out of local disk
 or the batch cache.
 
 `consumerBacklogSizeGB` has to comfortably exceed both the topic's total
-local retention and the cluster's actual Tiered Storage cache cap -
+local retention and the cluster's actual Tiered Storage cache cap,
 otherwise the first pass through the data warms the local TS cache and
-every read after that is a cache hit against local disk again, not a real
-appliance round trip. Don't estimate these by hand; pull the real numbers
-and compute it.
+every read after that is a cache hit against local disk.
+Rather than estimating these by hand, follow these steps to compute the proper value:
 
 **1. Total local retention held by the topic** (`retention.local.target.bytes`
 from `driver/driver-read-path.yaml` x `partitionsPerTopic` from
@@ -96,20 +95,19 @@ bin/benchmark \
   workloads/read-path-stress-backlog.yaml
 ```
 
-Expect this run to take longer than the write-path test: it has to produce
-the entire backlog first, then run OMB's warmup phase
-(`warmupDurationMinutes`), before the timed consume window
+Expect this run to take longer than the write-path test, since it has to produce
+the entire backlog first then run OMB's warmup phase
+(`warmupDurationMinutes`) before the timed consume window
 (`testDurationMinutes`) even starts.
 
 ## What to watch during the run
 
-- Consumer-side end-to-end latency and throughput from the OMB output -
-  this is your primary read-path number.
+- Consumer-side end-to-end latency and throughput from the OMB output (this is the primary read-path number)
 - Redpanda's Tiered Storage cache-related metrics (hit/miss and current
-  cache size) - a rising hit rate mid-run means the cache is warming up and
-  you're no longer purely measuring appliance reads; re-run with a larger
+  cache size). A rising hit rate mid-run means the cache is warming up and
+  you're no longer purely measuring appliance reads. In that case, re-run with a larger
   backlog or a smaller cache if that happens.
-- Broker CPU per core - hydration and decompression work happens per
+- Broker CPU per core. Hydration and decompression work happens per
   shard, so an uneven per-core CPU profile can mean a small number of hot
   partitions are bottlenecking the whole test rather than the appliance.
 
@@ -119,7 +117,7 @@ Run the workload a few times with `consumerPerSubscription` increased each
 time (2, 4, 8, ...) while everything else stays fixed. Because each
 concurrent reader can drive independent hydration requests against the
 appliance, this sweep is what actually reveals your read-path concurrency
-ceiling - a single-consumer run mostly measures per-request latency, not
+ceiling; a single-consumer run mostly measures per-request latency, not
 throughput headroom.
 
 - If throughput keeps climbing as you add consumers, `04-tuning-guide.md`'s
@@ -131,7 +129,6 @@ throughput headroom.
   now the wrong direction: over-provisioned concurrency past what
   connections/memory can back) or appliance-side (front-end network/CPU).
 
-**Record the write-path number and this concurrency curve as iteration 0**
-before changing any `cloud_storage_*` property - see "The loop" at the top
-of `04-tuning-guide.md`. With both in hand, go there now to turn them into
-concrete property changes.
+Record the write-path number and this concurrency curve as iteration 0
+before changing any `cloud_storage_*` property. See "The loop" at the top
+of `04-tuning-guide.md`.

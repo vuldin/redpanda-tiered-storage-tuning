@@ -3,9 +3,9 @@
 ## Point Redpanda at the appliance
 
 The properties below are the ones that most commonly need a non-default
-value when the object store is self-hosted rather than a public cloud
-provider. Set them with `rpk cluster config edit` (or `rpk cluster config
-set <property> <value>` one at a time). Most require a broker restart -
+value when the object store is self-hosted.
+Set them with `rpk cluster config edit` (or `rpk cluster config
+set <property> <value>` one at a time). Most require a broker restart, so
 check the "Requires restart" column in each linked reference page before
 you plan the change.
 

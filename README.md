@@ -3,7 +3,7 @@
 # Tuning Redpanda Tiered Storage for Self-Hosted Object Storage
 
 A runbook and benchmark kit for operators running Redpanda Tiered Storage
-against **self-hosted, S3-compatible object storage** - an on-prem appliance
+against self-hosted, S3-compatible object storage to find the optimal tuning for Redpanda when using an on-prem appliance
 (VAST Data, Dell ECS/PowerScale, NetApp StorageGRID, Pure FlashBlade,
 Cloudian, Ceph RGW, MinIO, and similar) rather than a public cloud provider
 like AWS S3 or GCS.
@@ -16,25 +16,18 @@ store is commonly tens of milliseconds and the provider enforces its own
 rate limits. Redpanda's default `cloud_storage_*` settings are calibrated
 for that profile.
 
-A local, on-prem appliance usually looks nothing like that: round-trip
-latency can be single-digit milliseconds, there's no external rate limiter,
-and the constraint is whatever your network fabric and the appliance's own
-front-end can sustain. That changes the tuning direction:
+But an on-prem appliance can have round-trip
+latency of single-digit milliseconds, there's no external rate limiter,
+and the constraints are whatever your network and the appliance's own
+front-end can sustain. Defaults tuned to avoid overwhelming a rate-limited public endpoint can leave a fast local appliance under-utilized.
 
-- Defaults tuned to avoid overwhelming a rate-limited public endpoint can
-  leave a fast local appliance under-utilized.
-- The lever that usually matters most is **request concurrency**
-  (`cloud_storage_max_connections` and friends), not object size - on a
-  low-latency link you don't need huge objects to amortize round-trip cost.
-- The appliance's own characteristics (multipart-upload cost, path-style vs
-  virtual-hosted addressing, TLS/cert setup) matter more than they do
-  against a hyperscaler that everyone has already tuned against.
+Request concurrency (`cloud_storage_max_connections` and other similar variables) will likely provide the most tuning benefit.
+But also keep in mind that the appliance's own characteristics (multipart-upload cost, TLS/cert setup) matter more than they do against a cloud provider that everyone has already tuned against.
 
-This repo does not publish a single set of "correct" tuning values - your
-appliance, network, and workload determine those. Instead it gives you:
+This repo does not publish a single set of "correct" tuning values since your
+appliance, network, and workload will determine those. Instead it gives you the following tools:
 
-1. A validation step to confirm Redpanda can reach the appliance correctly
-   before you draw any performance conclusions.
+1. A validation step to confirm Redpanda can reach the appliance correctly.
 2. Two benchmark workloads (write path / upload, and read path / hydration)
    that isolate each side of Tiered Storage so you can measure your own
    ceiling instead of guessing.
