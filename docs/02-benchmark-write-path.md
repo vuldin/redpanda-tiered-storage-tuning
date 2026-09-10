@@ -16,13 +16,17 @@ broker addresses and connection security config (see the placeholders in
 the file), then run:
 
 ```sh
-sudo bin/benchmark \
+bin/benchmark \
   -d driver/driver-write-path.yaml \
   workloads/write-path-stress.yaml
 ```
 
-Give it at least the workload's configured 30 minutes. The first minute or
-two will look artificially fast - Redpanda still has local segments to
+Give it at least the workload's configured 35 minutes total
+(`warmupDurationMinutes` + `testDurationMinutes` - OMB always runs a warmup
+phase before the timed window, and it isn't obvious from the workload file
+alone since most example workloads leave it at OMB's own default of 30).
+The first minute or two of the timed window will look artificially fast -
+Redpanda still has local segments to
 close and there's no upload backlog yet - so judge steady state from the
 back half of the run, not the opening burst.
 

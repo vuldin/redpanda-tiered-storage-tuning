@@ -29,13 +29,15 @@ appliance round trip.
 Fill in your connection details in `driver/driver-read-path.yaml`, then:
 
 ```sh
-sudo bin/benchmark \
+bin/benchmark \
   -d driver/driver-read-path.yaml \
   workloads/read-path-stress-backlog.yaml
 ```
 
 Expect this run to take longer than the write-path test: it has to produce
-the entire backlog before the timed consume phase even starts.
+the entire backlog first, then run OMB's warmup phase
+(`warmupDurationMinutes`), before the timed consume window
+(`testDurationMinutes`) even starts.
 
 ## What to watch during the run
 

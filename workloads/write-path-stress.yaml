@@ -23,4 +23,8 @@ producersPerTopic: 4
 producerRate: 2000000
 
 consumerBacklogSizeGB: 0
+# OMB's own default is 30 - unrelated to testDurationMinutes below, and easy
+# to miss since it isn't in most example workload files. Total wall-clock
+# time for this run is warmupDurationMinutes + testDurationMinutes.
+warmupDurationMinutes: 5
 testDurationMinutes: 30
