@@ -24,6 +24,16 @@ with your storage team whether it's doing TLS termination and whether it
 enforces its own connection limits - those can quietly become your real
 ceiling before any Redpanda property does.
 
+**Ordering trap if you set these one at a time with `rpk cluster config set`
+instead of `rpk cluster config edit`:** each `set` call validates the config
+as of that single change, and `cloud_storage_enabled`'s validator checks
+that the endpoint/region/bucket/credentials properties are already in place
+at the moment you flip it. Set every other `cloud_storage_*` property first,
+and `cloud_storage_enabled` last - flipping it first fails with
+`no changes were made: Validation errors`, even though every property ends
+up with a correct value once you're done. `rpk cluster config edit` sidesteps
+this entirely by applying every change as one atomic set.
+
 ## Enable Tiered Storage on a topic
 
 Two mechanisms exist; use the modern one unless you're on a pre-26.1
