@@ -8,7 +8,10 @@ name: redpanda-tiered-storage-read-path
 # producerConfig, and consumerConfig (see the OMB driver-kafka docs for the
 # full list of supported client properties).
 
+driverClass: io.openmessaging.benchmark.driver.redpanda.RedpandaBenchmarkDriver
+
 replicationFactor: 3
+reset: true
 
 topicConfig: |
   # Requires cluster property default_redpanda_storage_mode=tiered, OR
@@ -38,6 +41,7 @@ producerConfig: |
   compression.type=none
 
 consumerConfig: |
+  group.id=benchGroup
   auto.offset.reset=earliest
   enable.auto.commit=false
   auto.commit.interval.ms=0
