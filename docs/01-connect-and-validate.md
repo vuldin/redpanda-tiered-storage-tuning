@@ -26,13 +26,19 @@ ceiling before any Redpanda property does.
 
 **Ordering trap if you set these one at a time with `rpk cluster config set`
 instead of `rpk cluster config edit`:** each `set` call validates the config
-as of that single change, and `cloud_storage_enabled`'s validator checks
-that the endpoint/region/bucket/credentials properties are already in place
-at the moment you flip it. Set every other `cloud_storage_*` property first,
-and `cloud_storage_enabled` last - flipping it first fails with
-`no changes were made: Validation errors`, even though every property ends
-up with a correct value once you're done. `rpk cluster config edit` sidesteps
-this entirely by applying every change as one atomic set.
+as of that single change, and the dependencies run in both directions:
+
+- `cloud_storage_enabled`'s validator requires the endpoint/region/bucket/
+  credentials properties to already be in place, so it can't go first.
+- `default_redpanda_storage_mode` (see the next section) requires
+  `cloud_storage_enabled` to already be `true` - its validator rejects
+  `tiered` with "cannot be set to tiered when cloud_storage_enabled is
+  false" - so it can't go before `cloud_storage_enabled` either.
+
+The order that works: the connectivity properties first, then
+`cloud_storage_enabled`, then `default_redpanda_storage_mode` last.
+`rpk cluster config edit` sidesteps all of this by applying every change as
+one atomic set.
 
 ## Enable Tiered Storage on a topic
 
