@@ -1,0 +1,44 @@
+name: redpanda-tiered-storage-read-path
+
+# OMB driver-redpanda client config for the read-path (hydration) stress
+# test. See ../docs/03-benchmark-read-path.md for how to run this.
+#
+# Fill in your own connection details below. If your cluster uses
+# TLS/mTLS/SASL, add the matching client.* properties to commonConfig,
+# producerConfig, and consumerConfig (see the OMB driver-kafka docs for the
+# full list of supported client properties).
+
+replicationFactor: 3
+
+topicConfig: |
+  # Requires cluster property default_redpanda_storage_mode=tiered, OR
+  # uncomment the line below for an explicit per-topic override (26.1+):
+  # redpanda.storage.mode=tiered
+  #
+  # Pre-26.1 clusters: use the legacy pair instead:
+  # redpanda.remote.write=true
+  # redpanda.remote.read=true
+  min.insync.replicas=2
+  # Deliberately small: forces the backlog off local disk quickly so
+  # consumers are reading from the appliance, not local disk or the batch
+  # cache. Must be well below workloads/read-path-stress-backlog.yaml's
+  # consumerBacklogSizeGB, converted to bytes, per partition.
+  retention.local.target.bytes=268435456
+
+commonConfig: |
+  bootstrap.servers=REPLACE_ME:9092
+  # security.protocol=SASL_SSL
+  # sasl.mechanism=SCRAM-SHA-256
+  # sasl.jaas.config=REPLACE_ME
+
+producerConfig: |
+  acks=all
+  linger.ms=5
+  batch.size=131072
+  compression.type=none
+
+consumerConfig: |
+  auto.offset.reset=earliest
+  enable.auto.commit=false
+  auto.commit.interval.ms=0
+  max.partition.fetch.bytes=1048576

@@ -1,0 +1,26 @@
+name: Tiered storage write-path stress (no backlog)
+
+# See ../docs/02-benchmark-write-path.md.
+# Consumers stay at the tail (consumerBacklogSizeGB: 0) so nearly all load
+# on the appliance is upload traffic. Run with driver/driver-write-path.yaml.
+
+topics: 1
+partitionsPerTopic: 12
+keyDistributor: "NO_KEY"
+
+messageSize: 4096
+useRandomizedPayloads: true
+randomBytesRatio: 0.5
+randomizedPayloadPoolSize: 1000
+
+subscriptionsPerTopic: 1
+consumerPerSubscription: 4
+producersPerTopic: 4
+
+# Intentionally set far above what any of this is expected to sustain.
+# OMB reports achieved throughput separately from this target - read that
+# number, not this one.
+producerRate: 2000000
+
+consumerBacklogSizeGB: 0
+testDurationMinutes: 30

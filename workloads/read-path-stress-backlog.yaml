@@ -1,0 +1,35 @@
+name: Tiered storage read-path stress (backlog build, then drain)
+
+# See ../docs/03-benchmark-read-path.md.
+# Producers build the configured backlog first; consumers then start and
+# read it from earliest. Run with driver/driver-read-path.yaml, whose
+# topicConfig sets a small retention.local.target.bytes so this backlog is
+# mostly served from the appliance rather than local disk.
+#
+# consumerBacklogSizeGB must comfortably exceed both:
+#   - retention.local.target.bytes (in driver-read-path.yaml) x partitionsPerTopic, in GB
+#   - your cluster's cloud_storage_cache_size / cloud_storage_cache_size_percent
+# or the first read pass will warm the local Tiered Storage cache and
+# every read after that will hit local disk instead of the appliance.
+# Scale the value below up for your environment - 500 GB is a starting
+# point, not a target.
+
+topics: 1
+partitionsPerTopic: 12
+keyDistributor: "NO_KEY"
+
+messageSize: 4096
+useRandomizedPayloads: true
+randomBytesRatio: 0.5
+randomizedPayloadPoolSize: 1000
+
+subscriptionsPerTopic: 1
+# Re-run with this doubled (2, 4, 8, ...) each pass to sweep read
+# concurrency - see "Reading the result, and sweeping concurrency" in
+# ../docs/03-benchmark-read-path.md.
+consumerPerSubscription: 2
+producersPerTopic: 4
+
+producerRate: 2000000
+consumerBacklogSizeGB: 500
+testDurationMinutes: 30
