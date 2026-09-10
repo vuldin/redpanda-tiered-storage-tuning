@@ -1,30 +1,92 @@
 # 3. Benchmark the read path
 
-Goal: find the sustained throughput at which Redpanda can hydrate (download
+The steps here are focused on finding the sustained throughput Redpanda can hydrate (download
 and read) data back out of your appliance, isolated from the write side.
 
 ## How the test isolates the read path
 
 Reading from the batch cache or the local disk cache tells you nothing
-about the appliance - you need reads that are actually forced out to
+about the appliance, so we need to ensure reads are actually forced out to
 object storage.
 
 `workloads/read-path-stress-backlog.yaml` uses OMB's `consumerBacklogSizeGB`
-mechanic: producers run alone first until the configured backlog has
-accumulated, and only then do consumers start, reading that backlog back.
+mechanic, so producers run alone first until the configured backlog has
+accumulated. Only then will consumers start reading that backlog back.
 The paired driver, `driver/driver-read-path.yaml`, sets an aggressively
-small `retention.local.target.bytes` on the topic, so by the time consumers
-start, almost all of that backlog has already rolled off local disk and
+small `retention.local.target.bytes` on the topic. So by the time consumers
+start almost all of that backlog has already rolled off local disk and
 exists only in the appliance. Consumers reading from `earliest` are then
 forced to hydrate from object storage rather than serve out of local disk
 or the batch cache.
 
-Size `consumerBacklogSizeGB` in the workload file to comfortably exceed
-both the topic's local retention target and `cloud_storage_cache_size` /
-`cloud_storage_cache_size_percent` (the Tiered Storage disk cache) -
+`consumerBacklogSizeGB` has to comfortably exceed both the topic's total
+local retention and the cluster's actual Tiered Storage cache cap -
 otherwise the first pass through the data warms the local TS cache and
 every read after that is a cache hit against local disk again, not a real
-appliance round trip.
+appliance round trip. Don't estimate these by hand; pull the real numbers
+and compute it.
+
+**1. Total local retention held by the topic** (`retention.local.target.bytes`
+from `driver/driver-read-path.yaml` x `partitionsPerTopic` from
+`workloads/read-path-stress-backlog.yaml`):
+
+```sh
+RETENTION_BYTES=$(grep 'retention.local.target.bytes=' driver/driver-read-path.yaml | cut -d= -f2)
+PARTITIONS=$(awk '/^partitionsPerTopic:/{print $2}' workloads/read-path-stress-backlog.yaml)
+LOCAL_RETENTION_TOTAL_BYTES=$(( RETENTION_BYTES * PARTITIONS ))
+echo "Local retention total: $LOCAL_RETENTION_TOTAL_BYTES bytes"
+```
+
+**2. The cluster's actual cache cap**, run from a shell with `rpk` pointed
+at your cluster. `cloud_storage_cache_size` and `cloud_storage_cache_size_percent`
+are cluster properties (Redpanda uses whichever calculates smaller, in
+bytes, unless one of them is `0` - see
+[the property reference](https://docs.redpanda.com/current/reference/properties/object-storage-properties/#cloud_storage_cache_size_percent)).
+`cloud_storage_cache_directory` is a per-broker property read from
+`redpanda.yaml`, not `rpk cluster config` - SSH to a broker for that part:
+
+```sh
+CACHE_SIZE_BYTES=$(rpk cluster config get cloud_storage_cache_size)
+CACHE_SIZE_PERCENT=$(rpk cluster config get cloud_storage_cache_size_percent)
+
+# On a broker: find the cache directory (defaults to <data_directory>/cloud_storage_cache
+# if cloud_storage_cache_directory is unset in redpanda.yaml), then the disk size it lives on.
+CACHE_DIR=$(awk '/cloud_storage_cache_directory:/{print $2; f=1} END{if(!f) print ""}' /etc/redpanda/redpanda.yaml)
+if [ -z "$CACHE_DIR" ]; then
+  DATA_DIR=$(awk '/data_directory:/{print $2; exit}' /etc/redpanda/redpanda.yaml)
+  CACHE_DIR="$DATA_DIR/cloud_storage_cache"
+fi
+DISK_BYTES=$(df --output=size -B1 "$CACHE_DIR" | tail -1 | tr -d ' ')
+CACHE_CAP_FROM_PERCENT=$(( DISK_BYTES * ${CACHE_SIZE_PERCENT%.*} / 100 ))
+
+# Redpanda's own precedence: smaller of the two, unless one is 0.
+if [ "$CACHE_SIZE_BYTES" = "0" ]; then
+  EFFECTIVE_CACHE_BYTES=$CACHE_CAP_FROM_PERCENT
+elif [ "$CACHE_SIZE_PERCENT" = "null" ] || [ -z "$CACHE_SIZE_PERCENT" ]; then
+  EFFECTIVE_CACHE_BYTES=$CACHE_SIZE_BYTES
+elif [ "$CACHE_SIZE_BYTES" -lt "$CACHE_CAP_FROM_PERCENT" ]; then
+  EFFECTIVE_CACHE_BYTES=$CACHE_SIZE_BYTES
+else
+  EFFECTIVE_CACHE_BYTES=$CACHE_CAP_FROM_PERCENT
+fi
+echo "Effective cache cap: $EFFECTIVE_CACHE_BYTES bytes"
+```
+
+The `awk` lines above assume a flat `key: value` line in `redpanda.yaml`,
+which is the common case - if yours nests differently, just read the two
+values by hand and skip straight to setting `CACHE_DIR`.
+
+**3. Set `consumerBacklogSizeGB`** to 2x the larger of the two figures
+(comfortable headroom, not a razor's-edge minimum), and write it straight
+into the workload file:
+
+```sh
+FLOOR_BYTES=$LOCAL_RETENTION_TOTAL_BYTES
+[ "$EFFECTIVE_CACHE_BYTES" -gt "$FLOOR_BYTES" ] && FLOOR_BYTES=$EFFECTIVE_CACHE_BYTES
+TARGET_GB=$(( (FLOOR_BYTES * 2 + 999999999) / 1000000000 ))
+echo "Setting consumerBacklogSizeGB: $TARGET_GB"
+sed -i "s/^consumerBacklogSizeGB:.*/consumerBacklogSizeGB: $TARGET_GB/" workloads/read-path-stress-backlog.yaml
+```
 
 Fill in your connection details in `driver/driver-read-path.yaml`, then:
 
