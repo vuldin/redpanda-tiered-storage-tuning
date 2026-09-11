@@ -1,5 +1,3 @@
-<title>Tuning Redpanda Tiered Storage for Self-Hosted Object Storage</title>
-
 # Tuning Redpanda Tiered Storage for Self-Hosted Object Storage
 
 A runbook and benchmark kit for operators running Redpanda Tiered Storage
