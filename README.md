@@ -37,7 +37,7 @@ appliance, network, and workload will determine those. Instead it gives you the 
 ```
 docs/
   01-connect-and-validate.md   Point Redpanda at the appliance; self-test
-  02-benchmark-write-path.md   Stress the upload path, find your write ceiling
+  02-benchmark-write-path.md   Client placement/sizing pre-flight, then stress the upload path
   03-benchmark-read-path.md    Stress the hydration path, find your read ceiling
   04-tuning-guide.md           Property-by-property tuning decision tree
 driver/

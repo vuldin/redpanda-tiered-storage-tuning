@@ -3,6 +3,12 @@
 The steps here are focused on finding the sustained throughput Redpanda can hydrate (download
 and read) data back out of your appliance, isolated from the write side.
 
+If you haven't already, do the client-placement latency check and the
+throughput-based sizing pass from `02-benchmark-write-path.md` first -
+both apply here too. In particular, size `partitionsPerTopic` to at least
+`consumerPerSubscription` so every consumer thread gets its own partitions
+instead of contending for the same ones.
+
 ## How the test isolates the read path
 
 Reading from the batch cache or the local disk cache tells you nothing

@@ -3,6 +3,11 @@ name: Tiered storage write-path stress (no backlog)
 # See ../docs/02-benchmark-write-path.md.
 # Consumers stay at the tail (consumerBacklogSizeGB: 0) so nearly all load
 # on the appliance is upload traffic. Run with driver/driver-write-path.yaml.
+#
+# partitionsPerTopic/producersPerTopic below are sized for a first
+# mechanical pass, not for any particular throughput target - see "Sizing
+# the benchmark to your target throughput" in docs/02 before assuming a
+# low number here means a low ceiling.
 
 topics: 1
 partitionsPerTopic: 12

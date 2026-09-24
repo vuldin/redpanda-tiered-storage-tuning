@@ -1,5 +1,14 @@
 # 4. Tuning guide
 
+Before any of this: if your benchmark's publish or end-to-end latency is
+many multiples of the client-broker RTT you measured in
+`02-benchmark-write-path.md`'s pre-flight check (seconds, when RTT is
+milliseconds), that's the benchmark client or its placement, not a
+`cloud_storage_*` property. An idle-looking cluster (low CPU, no upload
+errors or slowdowns, low connection-pool utilization) alongside multi-second
+latency is the signature - go fix client placement and thread/partition
+sizing before touching anything below.
+
 ## The loop
 
 1. **Baseline.** Run `02-benchmark-write-path.md` and `03-benchmark-read-path.md`
@@ -196,3 +205,7 @@ Redpanda support, not a config change to make unilaterally.
 5. Either benchmark shows high retries rather than a clean plateau -> stop
    tuning throughput properties and revisit connectivity
    (`01-connect-and-validate.md`) and appliance-side limits first.
+6. Latency is multi-second while the cluster looks idle (low CPU, low pool
+   utilization, no errors/slowdowns) -> stop tuning properties entirely;
+   go back to `02-benchmark-write-path.md`'s client-placement check and
+   sizing pass.

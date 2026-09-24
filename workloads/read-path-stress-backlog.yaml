@@ -13,6 +13,13 @@ name: Tiered storage read-path stress (backlog build, then drain)
 # every read after that will hit local disk instead of the appliance.
 # Scale the value below up for your environment - 500 GB is a starting
 # point, not a target.
+#
+# partitionsPerTopic/producersPerTopic/consumerPerSubscription below are
+# sized for a first mechanical pass, not for any particular throughput
+# target - see "Sizing the benchmark to your target throughput" in docs/02
+# before assuming a low number here means a low ceiling. Keep
+# partitionsPerTopic >= consumerPerSubscription so every consumer thread
+# gets its own partitions instead of contending.
 
 topics: 1
 partitionsPerTopic: 12
