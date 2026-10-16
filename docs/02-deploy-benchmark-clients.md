@@ -138,7 +138,19 @@ do all need to pass the latency check above against your brokers.
 
 From any one machine that can reach every worker's port 8080 (this can be
 one of the worker machines itself, or a separate coordinator host - it
-only orchestrates, it doesn't need to be beefy):
+only orchestrates, it doesn't need to be beefy), copy this kit's `driver/`
+and `workloads/` directories into the same directory as that machine's OMB
+build (e.g. `/opt/benchmark`, per Redpanda's benchmark guide) so the
+relative paths in the command below - and in every other `bin/benchmark`
+example in this repo - resolve:
+
+```sh
+scp -r driver workloads <coordinator-host>:/opt/benchmark/
+```
+
+Only the coordinator needs these files - workers take their instructions
+over the network at runtime and never read `driver/` or `workloads/`
+directly. Then, from inside that same directory on the coordinator:
 
 ```sh
 bin/benchmark --workers http://client1:8080,http://client2:8080,http://client3:8080 \

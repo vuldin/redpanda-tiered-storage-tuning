@@ -77,14 +77,14 @@ traffic, not an isolated best case. Instead it gives you:
    while it runs. This is the benchmark to run first and the one to keep
    coming back to.
    -> `docs/03-run-realistic-workload.md`
-4. **Tune.** Use the realistic workload's result as your baseline and
-   work through the properties one at a time, re-running the same
-   workload after each change.
-   -> `docs/06-tuning-guide.md`
-5. **(Optional) Isolate a side.** If step 3 pointed at a write- or
+4. **(Optional) Isolate a side.** If step 3 pointed at a write- or
    read-specific problem, isolate that path on its own, free of the
-   other side's traffic, before you keep tuning.
+   other side's traffic, before you start tuning.
    -> `docs/04-isolate-write-path.md` / `docs/05-isolate-read-path.md`
+5. **Tune.** Use the realistic workload's result (and any isolation
+   result from step 4) as your baseline and work through the properties
+   one at a time, re-running the same workload after each change.
+   -> `docs/06-tuning-guide.md`
 
 ## Repo layout
 
