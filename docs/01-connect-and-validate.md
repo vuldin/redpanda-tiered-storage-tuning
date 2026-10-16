@@ -101,8 +101,8 @@ A few things worth specifically checking:
   below will matter more for capacity planning than for tuning direction.
 - If they're single-digit milliseconds, that's a strong signal you're
   latency-rich relative to what Redpanda's defaults assume, and the
-  concurrency-focused tuning direction in `04-tuning-guide.md` is likely to
+  concurrency-focused tuning direction in `06-tuning-guide.md` is likely to
   apply.
 
 Once the appliance validates cleanly, move on to
-`02-benchmark-write-path.md`.
+`02-deploy-benchmark-clients.md`.

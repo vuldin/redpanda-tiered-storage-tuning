@@ -1,7 +1,7 @@
 name: redpanda-tiered-storage-read-path
 
 # OMB driver-redpanda client config for the read-path (hydration) stress
-# test. See ../docs/03-benchmark-read-path.md for how to run this.
+# test. See ../docs/05-isolate-read-path.md for how to run this.
 #
 # Fill in your own connection details below. If your cluster uses
 # TLS/mTLS/SASL, add the matching client.* properties to commonConfig,

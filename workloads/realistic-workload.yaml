@@ -1,0 +1,61 @@
+name: Realistic mixed produce+consume workload
+
+# See ../docs/03-run-realistic-workload.md.
+#
+# Unlike write-path-stress.yaml / read-path-stress-backlog.yaml (which
+# deliberately isolate one side of Tiered Storage to find its ceiling),
+# this workload is meant to look like YOUR actual production traffic:
+# continuous produce and continuous consume running at the same time,
+# for long enough to reach a steady state against the appliance rather
+# than a short burst.
+#
+# Every number below is a placeholder sized for a first mechanical pass,
+# not a recommendation. Replace them with your own numbers before trusting
+# any result from this file:
+#   - partitionsPerTopic / producersPerTopic: size to your target produce
+#     throughput using the method in ../docs/02-deploy-benchmark-clients.md.
+#   - subscriptionsPerTopic: the number of INDEPENDENT consumer groups/
+#     applications that read this topic in production (fan-out) - not a
+#     partition count. Two unrelated applications each reading the whole
+#     topic is subscriptionsPerTopic: 2, regardless of how many partitions
+#     the topic has.
+#   - consumerPerSubscription: OMB applies this ONE number to every
+#     subscription uniformly - there's no per-group override. If your real
+#     consumer groups differ a lot in size, size this to your largest/most
+#     demanding group, or run this file multiple times with different
+#     values to check each group separately.
+#   - producerRate: set this to your actual target produce rate, not an
+#     intentionally-unreachable ceiling - see the note below.
+
+topics: 1
+partitionsPerTopic: 12
+
+messageSize: 4096
+useRandomizedPayloads: true
+randomBytesRatio: 0.5
+randomizedPayloadPoolSize: 1000
+
+producersPerTopic: 4
+
+subscriptionsPerTopic: 2
+consumerPerSubscription: 4
+
+# Unlike the isolation workloads (which deliberately set this far above
+# what anything is expected to sustain, so OMB's own achieved-rate number
+# is what you read), this one is a real ceiling: set it to the produce
+# rate you actually expect in production. The point of this workload is
+# to run AT your expected traffic level and see what Tiered Storage does
+# under it, not to find the client's absolute maximum.
+producerRate: 50000
+
+# No artificial backlog - this models steady-state production traffic,
+# not a recovery/catch-up scenario. Use read-path-stress-backlog.yaml if
+# you specifically need to test catch-up-from-a-backlog behavior.
+consumerBacklogSizeGB: 0
+
+warmupDurationMinutes: 5
+# Long enough to reach steady state against the appliance and for
+# latency percentiles to settle - this is meant to be a realistic soak,
+# not a quick check. Extend this for a longer-duration validation before
+# treating any number from it as final.
+testDurationMinutes: 60

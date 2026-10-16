@@ -1,6 +1,7 @@
 name: Tiered storage write-path stress (no backlog)
 
-# See ../docs/02-benchmark-write-path.md.
+# See ../docs/04-isolate-write-path.md. This is a specialized diagnostic -
+# for the primary benchmark, see workloads/realistic-workload.yaml instead.
 # Consumers stay at the tail (consumerBacklogSizeGB: 0) so nearly all load
 # on the appliance is upload traffic. Run with driver/driver-write-path.yaml.
 #

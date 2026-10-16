@@ -1,8 +1,8 @@
-# 4. Tuning guide
+# Tuning guide
 
 Before any of this: if your benchmark's publish or end-to-end latency is
 many multiples of the client-broker RTT you measured in
-`02-benchmark-write-path.md`'s pre-flight check (seconds, when RTT is
+`02-deploy-benchmark-clients.md`'s pre-flight check (seconds, when RTT is
 milliseconds), that's the benchmark client or its placement, not a
 `cloud_storage_*` property. An idle-looking cluster (low CPU, no upload
 errors or slowdowns, low connection-pool utilization) alongside multi-second
@@ -11,11 +11,14 @@ sizing before touching anything below.
 
 ## The loop
 
-1. **Baseline.** Run `02-benchmark-write-path.md` and `03-benchmark-read-path.md`
-   (including the read-path concurrency sweep) once, unmodified, and record
-   the numbers for achieved MB/s for write-path, and the throughput-vs-concurrency
-   curve for read-path. This is iteration 0. Do not skip recording it, because without
-   a written baseline it will be difficult to compare subsequent runs.
+1. **Baseline.** Run `03-run-realistic-workload.md` once, unmodified, and
+   record what it told you (produce/consume MB/s per consumer group,
+   whether upload lag stayed bounded). This is iteration 0. If that run
+   pointed at a specific side, also run the matching isolation test
+   (`04-isolate-write-path.md` and/or `05-isolate-read-path.md`,
+   including the read-path concurrency sweep) and record those numbers
+   too. Do not skip recording it, because without a written baseline it
+   will be difficult to compare subsequent runs.
 2. **Pick one lever.** Use the ordering below (connection concurrency, then
    segment sizing, then read-side cache/readers) and the symptom-to-property
    mapping in the decision tree at the bottom. Change exactly one property.
@@ -34,9 +37,9 @@ sizing before touching anything below.
      like (diminishing returns) then the current configuration is your
      production candidate.
    - If your achieved throughput has converged with the appliance/network ceiling
-     from `02-`'s "Reading the result" section, or the read-path
-     concurrency sweep has flattened, then you've hit a hardware limit, and no
-     further Redpanda property is going to move it.
+     from `04-isolate-write-path.md`'s "Reading the result" section, or the
+     read-path concurrency sweep has flattened, then you've hit a hardware
+     limit, and no further Redpanda property is going to move it.
 
 A simple log can help keep track of iterations (one row per iteration):
 
@@ -148,7 +151,7 @@ about if a production topic's access pattern looks like that.
 Local disk cache for hydrated Tiered Storage data. Whichever of the two
 (absolute bytes vs. percent of disk) is smaller wins. This cache is what
 made your read-path benchmark's *second* pass through the same data fast -
-which is exactly why `03-benchmark-read-path.md` has you size the backlog
+which is exactly why `05-isolate-read-path.md` has you size the backlog
 to exceed it, so the benchmark measures the appliance instead of the
 cache.
 
@@ -175,7 +178,7 @@ Maximum concurrent read cursors into hydrated segments per core (alias:
 `cloud_storage_max_readers_per_shard`). Default **unset**, which resolves
 to `topic_partitions_per_shard`. No restart needed. This caps how many
 partitions' worth of reads a single core can service concurrently - if the
-concurrency sweep in `03-benchmark-read-path.md` plateaus well before
+concurrency sweep in `05-isolate-read-path.md` plateaus well before
 `cloud_storage_max_connections`/hydration concurrency looks saturated,
 check this property next; it's a different cap on a different resource
 (read cursors, not connections).
@@ -207,5 +210,5 @@ Redpanda support, not a config change to make unilaterally.
    (`01-connect-and-validate.md`) and appliance-side limits first.
 6. Latency is multi-second while the cluster looks idle (low CPU, low pool
    utilization, no errors/slowdowns) -> stop tuning properties entirely;
-   go back to `02-benchmark-write-path.md`'s client-placement check and
-   sizing pass.
+   go back to `02-deploy-benchmark-clients.md`'s client-placement check
+   and sizing pass.

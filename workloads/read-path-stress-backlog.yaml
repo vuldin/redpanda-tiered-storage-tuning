@@ -1,6 +1,7 @@
 name: Tiered storage read-path stress (backlog build, then drain)
 
-# See ../docs/03-benchmark-read-path.md.
+# See ../docs/05-isolate-read-path.md. This is a specialized diagnostic -
+# for the primary benchmark, see workloads/realistic-workload.yaml instead.
 # Producers build the configured backlog first; consumers then start and
 # read it from earliest. Run with driver/driver-read-path.yaml, whose
 # topicConfig sets a small retention.local.target.bytes so this backlog is
@@ -16,8 +17,8 @@ name: Tiered storage read-path stress (backlog build, then drain)
 #
 # partitionsPerTopic/producersPerTopic/consumerPerSubscription below are
 # sized for a first mechanical pass, not for any particular throughput
-# target - see "Sizing the benchmark to your target throughput" in docs/02
-# before assuming a low number here means a low ceiling. Keep
+# target - see "Sizing" in docs/02-deploy-benchmark-clients.md before
+# assuming a low number here means a low ceiling. Keep
 # partitionsPerTopic >= consumerPerSubscription so every consumer thread
 # gets its own partitions instead of contending.
 
@@ -33,7 +34,7 @@ randomizedPayloadPoolSize: 1000
 subscriptionsPerTopic: 1
 # Re-run with this doubled (2, 4, 8, ...) each pass to sweep read
 # concurrency - see "Reading the result, and sweeping concurrency" in
-# ../docs/03-benchmark-read-path.md.
+# ../docs/05-isolate-read-path.md.
 consumerPerSubscription: 2
 producersPerTopic: 4
 

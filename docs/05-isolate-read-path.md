@@ -1,10 +1,15 @@
-# 3. Benchmark the read path
+# Isolate the read path
+
+This is a specialized diagnostic, not the first thing to run. Start with
+`03-run-realistic-workload.md` - come here if that run shows a read-
+side-specific problem and you want to isolate the hydration path on its
+own, free of any write-side traffic, to pin down its ceiling precisely.
 
 The steps here are focused on finding the sustained throughput Redpanda can hydrate (download
 and read) data back out of your appliance, isolated from the write side.
 
 If you haven't already, do the client-placement latency check and the
-throughput-based sizing pass from `02-benchmark-write-path.md` first -
+throughput-based sizing pass from `02-deploy-benchmark-clients.md` first -
 both apply here too. In particular, size `partitionsPerTopic` to at least
 `consumerPerSubscription` so every consumer thread gets its own partitions
 instead of contending for the same ones.
@@ -126,7 +131,7 @@ appliance, this sweep is what actually reveals your read-path concurrency
 ceiling; a single-consumer run mostly measures per-request latency, not
 throughput headroom.
 
-- If throughput keeps climbing as you add consumers, `04-tuning-guide.md`'s
+- If throughput keeps climbing as you add consumers, `06-tuning-guide.md`'s
   read-concurrency properties (`cloud_storage_max_concurrent_hydrations_per_shard`,
   `cloud_storage_max_connections`) probably still have room before you hit
   a wall.
@@ -135,6 +140,6 @@ throughput headroom.
   now the wrong direction: over-provisioned concurrency past what
   connections/memory can back) or appliance-side (front-end network/CPU).
 
-Record the write-path number and this concurrency curve as iteration 0
-before changing any `cloud_storage_*` property. See "The loop" at the top
-of `04-tuning-guide.md`.
+Record this concurrency curve against the baseline from
+`03-run-realistic-workload.md` before changing any `cloud_storage_*`
+property. See "The loop" at the top of `06-tuning-guide.md`.

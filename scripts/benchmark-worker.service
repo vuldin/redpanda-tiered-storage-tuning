@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenMessaging Benchmark Worker
+After=network.target
+
+[Service]
+User=REPLACE_ME
+WorkingDirectory=/opt/benchmark
+ExecStart=/opt/benchmark/bin/benchmark-worker
+Restart=on-failure
+LimitNOFILE=1000000
+
+[Install]
+WantedBy=multi-user.target
