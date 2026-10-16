@@ -125,10 +125,15 @@ On every machine you'll use as a client:
    sudo systemctl enable --now benchmark-worker
    ```
 
-3. Confirm the worker is listening before moving on:
+3. Confirm the worker is listening before moving on. The worker (built on
+   Javalin) has no handler for `/` and returns 404 there even when it's
+   healthy, so don't use `curl -f` - that treats the 404 itself as
+   failure and reports every healthy worker as down. Checking that curl
+   got any HTTP response at all, rather than the status code, is enough
+   to confirm the port is actually serving:
 
    ```sh
-   curl -sf http://localhost:8080/ >/dev/null && echo "worker up" || echo "worker NOT responding"
+   curl -s -o /dev/null http://localhost:8080/ && echo "worker up" || echo "worker NOT responding"
    ```
 
 Repeat on every client machine. They don't need to be identical, but they
